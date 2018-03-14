@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/purecss@1.0.0/build/pure-min.css" integrity="sha384-nn4HPE8lTHyVtfCBi5yW9d20FjT8BJwUXyWZT9InLYax14RDjBj46LmSztkmNP9w"
+        crossorigin="anonymous">
+
+
+</head>
+
+<body>
+
+    <video style="display: none;" id="video" hidden="true"></video>
+
+
+    <center>
+        <h1>Car Recognition api</h1>
+        <p id="resolution"></p>
+        <canvas id="canvas"></canvas>
+    </center>
+
+
+    </div>
+
+
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+        crossorigin="anonymous"></script>
+
+    <script>
+
+        const width = 512;
+        var height = 0;
+        var streaming = false;
+        var pic_n = 0;
+
+        var bbx = [];
+
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+
+        video.addEventListener('canplay', (ev) => {
+            if (!streaming) {
+                height = video.videoHeight / (video.videoWidth / width);
+
+                video.setAttribute('width', width);
+                video.setAttribute('height', height);
+                canvas.setAttribute('width', width);
+                canvas.setAttribute('height', height);
+                streaming = true;
+
+                const p = document.getElementById('resolution')
+
+                p.innerHTML = `${width} x ${height}`
+
+            }
+        }, false);
+
+        function clearphoto() {
+            var context = canvas.getContext('2d');
+            context.fillStyle = "#AAA";
+            context.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function takepicture() {
+            var context = canvas.getContext('2d');
+            if (width && height) {
+                canvas.width = width;
+                canvas.height = height;
+                context.drawImage(video, 0, 0, width, height);
+
+                bbx.forEach((bb) => {
+                    context.rect(bb.x, bb.y, bb.w, bb.h);
+                    context.stroke();
+                });
+
+                context.strokeStyle = "green";
+                context.lineWidth = 4;
+
+                if (pic_n++ % 5 == 0) {
+                    var data = canvas.toDataURL('image/png');
+                    // var data = canvas.toDataURL('image/jpeg', 0.5);
+                    $.post("/classify", { img: data }, (res) => {
+                        bbx = res.bbx;
+                    })
+                }
+
+
+            } else {
+                clearphoto();
+            }
+        }
+
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then((stream) => {
+                console.log('started new stream');
+                video.srcObject = stream;
+                video.play();
+                setInterval(takepicture, 1000 / 30);
+            })
+            .catch((err) => {
+                console.log(err);
+            });
+
+
+    </script>
+
+</body>
+
+</html>
