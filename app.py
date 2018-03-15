@@ -1,5 +1,6 @@
 from flask import Flask, request, send_file, Response
 import base64
+from StringIO import StringIO
 from PIL import Image
 import numpy as np
 import json
@@ -26,6 +27,8 @@ def classify():
     content = data.split(';')[1]
     image_encoded = content.split(',')[1]
     img = base64.decodestring(image_encoded.encode('utf-8'))
+
+    img = Image.open(StringIO(img))
 
     # 224x224x3
 

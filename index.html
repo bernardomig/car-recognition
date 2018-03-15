@@ -16,6 +16,7 @@
 <body>
 
     <video style="display: none;" id="video" hidden="true"></video>
+    <canvas id="small-canvas" style="display:none;"></canvas>
 
 
     <center>
@@ -41,7 +42,8 @@
         var bbx = [];
 
         const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
+        const canvas1 = document.getElementById('canvas');
+        const canvas2 = document.getElementById('small-canvas');
 
         video.addEventListener('canplay', (ev) => {
             if (!streaming) {
@@ -49,11 +51,13 @@
 
                 video.setAttribute('width', width);
                 video.setAttribute('height', height);
-                canvas.setAttribute('width', width);
-                canvas.setAttribute('height', height);
+                canvas1.setAttribute('width', width);
+                canvas1.setAttribute('height', height);
+                canvas2.setAttribute('width', width);
+                canvas2.setAttribute('height', height);
                 streaming = true;
 
-                const p = document.getElementById('resolution')
+                const p = document.getElementById('resolution');
 
                 p.innerHTML = `${width} x ${height}`
 
@@ -61,29 +65,37 @@
         }, false);
 
         function clearphoto() {
-            var context = canvas.getContext('2d');
-            context.fillStyle = "#AAA";
-            context.fillRect(0, 0, canvas.width, canvas.height);
+            var context1 = canvas1.getContext('2d');
+            context1.fillStyle = "#AAA";
+            context1.fillRect(0, 0, canvas1.width, canvas1.height);
+            var context2 = canvas2.getContext('2d');
+            context2.fillStyle = "#AAA";
+            context2.fillRect(0, 0, canvas2.width, canvas2.height);
         }
 
         function takepicture() {
-            var context = canvas.getContext('2d');
+            var context1 = canvas1.getContext('2d');
+            var context2 = canvas2.getContext('2d');
             if (width && height) {
-                canvas.width = width;
-                canvas.height = height;
-                context.drawImage(video, 0, 0, width, height);
+                canvas1.width = width;
+                canvas1.height = height;
+                context1.drawImage(video, 0, 0, width, height);
+
+                canvas2.width = width;
+                canvas2.height = height;
+                context2.drawImage(video, 0, 0, width, height);
 
                 bbx.forEach((bb) => {
-                    context.rect(bb.x, bb.y, bb.w, bb.h);
-                    context.stroke();
+                    context1.rect(bb.x, bb.y, bb.w, bb.h);
+                    context1.stroke();
                 });
 
-                context.strokeStyle = "green";
-                context.lineWidth = 4;
+                context1.strokeStyle = "green";
+                context1.lineWidth = 4;
 
                 if (pic_n++ % 5 == 0) {
-                    var data = canvas.toDataURL('image/png');
-                    // var data = canvas.toDataURL('image/jpeg', 0.5);
+                    var data = canvas2.toDataURL('image/png');
+                    // var data = canvas1.toDataURL('image/jpeg', 0.5);
                     $.post("/classify", { img: data }, (res) => {
                         bbx = res.bbx;
                     })
